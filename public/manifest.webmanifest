@@ -1,0 +1,33 @@
+{
+  "name": "سیستم مدیریت کپسول‌های آتش‌نشانی",
+  "short_name": "آتش‌نشانی",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "lang": "fa",
+  "dir": "rtl",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ff7a00",
+  "description": "نظارت و مدیریت تجهیزات ایمنی ساختمان",
+  "icons": [
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/fanap.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    { "name": "پنل مدیریت", "url": "/admin" },
+    { "name": "نقشه طبقات", "url": "/admin/floor" }
+  ],
+  "categories": ["productivity", "utilities"],
+  "prefer_related_applications": false
+}
