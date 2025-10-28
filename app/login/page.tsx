@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { Mail, Lock, Eye, EyeOff, Loader2, Shield, Smartphone, Bell } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, CardAction } from "@/components/ui/card"
@@ -15,6 +15,8 @@ import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const nextPath = searchParams.get('next') || '/admin'
   const { toast } = useToast()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -32,8 +34,8 @@ export default function LoginPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || "ورود ناموفق")
-      toast({ title: "ورود موفق", description: "در حال انتقال به پنل مدیریت" })
-      router.replace("/admin")
+      toast({ title: "ورود موفق", description: "در حال انتقال..." })
+      router.replace(nextPath)
     } catch (err: any) {
       toast({ title: "خطا در ورود", description: err.message, variant: "destructive" })
     } finally {

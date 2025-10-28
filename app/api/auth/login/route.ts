@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
-import { signToken } from '@/lib/auth'
+import { signToken, getCookieMaxAge } from '@/lib/auth'
 
 export async function POST(req: Request) {
   try {
@@ -16,7 +16,13 @@ export async function POST(req: Request) {
 
     const token = await signToken({ userId: user.id, email: user.email, role: user.role })
     const res = NextResponse.json({ ok: true })
-    res.cookies.set('token', token, { httpOnly: true, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 7 })
+    res.cookies.set('token', token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: getCookieMaxAge(),
+      secure: process.env.NODE_ENV === 'production',
+    })
     return res
   } catch (e) {
     console.error(e)

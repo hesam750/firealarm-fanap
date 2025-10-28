@@ -6,11 +6,9 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  experimental: {
-    // Ensure prisma files (including SQLite dev.db) are bundled with serverless functions on Vercel
-    outputFileTracingIncludes: {
-      'app/**/route.js': ['./prisma/**/*'],
-    },
+  // Ensure prisma files (including SQLite dev.db) are bundled with serverless functions on Vercel
+  outputFileTracingIncludes: {
+    'app/**/route.js': ['./prisma/**/*'],
   },
 }
 
