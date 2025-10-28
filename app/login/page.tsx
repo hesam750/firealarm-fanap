@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { Mail, Lock, Eye, EyeOff, Loader2, Shield, Smartphone, Bell } from "lucide-react"
@@ -13,7 +13,7 @@ import Link from "next/link"
 // Removed left brand panel; no brand background needed here
 import { ThemeToggle } from "@/components/theme-toggle"
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const nextPath = searchParams.get('next') || '/admin'
@@ -130,5 +130,13 @@ export default function LoginPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageContent />
+    </Suspense>
   )
 }

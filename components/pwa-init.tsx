@@ -20,7 +20,8 @@ export function PwaInit() {
       }
     }
 
-    if (document.visibilityState === 'prerender') {
+    // Modern browsers expose 'visible' | 'hidden'; wait for visible if hidden
+    if (document.visibilityState === 'hidden') {
       const onVisible = () => {
         if (document.visibilityState === 'visible') {
           safeRegister()

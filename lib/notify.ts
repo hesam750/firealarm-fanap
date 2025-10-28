@@ -1,4 +1,4 @@
-import { messaging } from './firebase-admin'
+import { getServerMessaging } from './firebase-admin'
 import type { MulticastMessage } from 'firebase-admin/messaging'
 
 type SendOptions = {
@@ -21,6 +21,7 @@ export async function sendToTokens(tokens: string[], opts: SendOptions) {
     message.webpush = { fcmOptions: { link: url } }
   }
 
+  const messaging = getServerMessaging()
   const res = await messaging.sendEachForMulticast(message)
   return { successCount: res.successCount, failureCount: res.failureCount }
 }
