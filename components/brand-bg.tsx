@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import { cn } from "@/lib/utils"
+import { useState } from "react"
 
 type BrandBgProps = {
   children: React.ReactNode
@@ -10,6 +11,7 @@ type BrandBgProps = {
 }
 
 export function BrandBg({ children, className, logoSrc = "/fanap.png" }: BrandBgProps) {
+  const [src, setSrc] = useState(logoSrc)
   return (
     <div
       className={cn(
@@ -58,12 +60,16 @@ export function BrandBg({ children, className, logoSrc = "/fanap.png" }: BrandBg
       {/* Logo watermark */}
       <div className="absolute left-4 top-4 z-10 select-none opacity-60">
         <Image
-          src={logoSrc}
-          alt="Brand logo"
+          src={src}
+          alt="لوگو"
           width={140}
           height={40}
-          className="h-auto w-auto mix-blend-multiply dark:mix-blend-screen"
+          className="h-auto w-auto"
           priority
+          onError={() => {
+            // Fallback to placeholder if the provided logo fails to load
+            if (src !== "/placeholder-logo.png") setSrc("/placeholder-logo.png")
+          }}
         />
       </div>
 

@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Badge } from "@/components/ui/badge"
-import { Move, Square, Trash2, Save, Palette, Type as TypeIcon } from "lucide-react"
+import { Move, Square, Trash2, Save, Palette, Type as TypeIcon, Settings } from "lucide-react"
 import type { Extinguisher } from "@/types/extinguisher"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
@@ -15,6 +15,8 @@ import { FloorPlanFirst } from "./floor-plan-first"
 import AnimatedGridPattern from "./ui/animated-grid-pattern"
 import SpotlightCursor from "./ui/spotlight-cursor"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { useIsMobile } from "@/components/ui/use-mobile"
 
 interface FloorPlanViewerProps {
   extinguishers: Extinguisher[]
@@ -49,6 +51,7 @@ type AddItem =
 
 export function FloorPlanViewer({ extinguishers, onExtinguisherClick, onMapClickAddExtinguisher, editable = false, cardClassName, background = "panel" }: FloorPlanViewerProps) {
   const { toast } = useToast()
+  const isMobile = useIsMobile()
   const [selectedFloor, setSelectedFloor] = useState<"ground" | "first">("ground")
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [dragMode, setDragMode] = useState<boolean>(false)
@@ -613,108 +616,221 @@ export function FloorPlanViewer({ extinguishers, onExtinguisherClick, onMapClick
   }
 
   return (
-    <Card className={cn("p-6", cardClassName)}>
+    <Card className={cn("p-4 sm:p-6", cardClassName)}>
       <div className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-2xl font-bold">نقشه ساختمان</h2>
           <div className="flex items-center gap-3">
             {editable && (
-              <div className="flex items-center gap-2">
-                <ToggleGroup
-                  type="single"
-                  value={selectedMode}
-                  onValueChange={(v) => setMode((v as any) || "none")}
-                  variant="outline"
-                  size="sm"
-                >
-                  <ToggleGroupItem value="move" aria-label="حالت جابه‌جایی">
-                    <Move className="w-4 h-4 ml-1" />
-                    جابه‌جایی
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="draw" aria-label="حالت رسم مستطیل">
-                    <Square className="w-4 h-4 ml-1" />
-                    رسم
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="text" aria-label="حالت افزودن متن">
-                    <TypeIcon className="w-4 h-4 ml-1" />
-                    متن
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="delete" aria-label="حالت حذف شکل" className="text-destructive">
-                    <Trash2 className="w-4 h-4 ml-1" />
-                    حذف
-                  </ToggleGroupItem>
-                </ToggleGroup>
-
-                {drawMode && (
-                  <div className="flex items-center gap-2 ml-2">
-                    <Badge variant="secondary" className="flex items-center gap-1">
-                      <Palette className="w-3 h-3" />
-                      رنگ
-                    </Badge>
-                    {[
-                      { fill: "#f8fafc", stroke: "#475569" },
-                      { fill: "#eef2ff", stroke: "#475569" },
-                      { fill: "#fff7ed", stroke: "#d97706" },
-                      { fill: "#dcfce7", stroke: "#166534" },
-                      { fill: "rgba(100, 100, 255, 0.3)", stroke: "blue" },
-                      { fill: "#ffe4e6", stroke: "#be123c" },
-                    ].map((c) => (
-                      <button
-                        key={`${c.fill}-${c.stroke}`}
-                        className={cn(
-                          "w-5 h-5 rounded border",
-                          drawFillColor === c.fill && drawStrokeColor === c.stroke ? "ring-2 ring-ring" : ""
-                        )}
-                        style={{ backgroundColor: c.fill, borderColor: c.stroke }}
-                        onClick={() => { setDrawFillColor(c.fill); setDrawStrokeColor(c.stroke) }}
-                        aria-label={`انتخاب رنگ`}
-                        title={`fill: ${c.fill}`}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                {textMode && (
-                  <div className="flex items-center gap-2 ml-2">
-                    <input
-                      value={textInput}
-                      onChange={(e) => setTextInput(e.target.value)}
-                      placeholder="متن"
-                      className="h-8 px-2 py-1 rounded border bg-background"
-                      aria-label="ورود متن"
-                      style={{ minWidth: 160 }}
-                    />
-                    <input
-                      type="number"
-                      value={textX}
-                      onChange={(e) => setTextX(e.target.value)}
-                      placeholder="X"
-                      className="h-8 px-2 py-1 rounded border bg-background w-24"
-                      aria-label="مختصات X"
-                    />
-                    <input
-                      type="number"
-                      value={textY}
-                      onChange={(e) => setTextY(e.target.value)}
-                      placeholder="Y"
-                      className="h-8 px-2 py-1 rounded border bg-background w-24"
-                      aria-label="مختصات Y"
-                    />
-                    <Button variant="outline" size="sm" onClick={addTextAtCoordinates}>
-                      قراردهی در مختصات
+              isMobile ? (
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="secondary" size="sm" className="shrink-0">
+                      <Settings className="w-4 h-4 ml-2" />
+                      ابزار ویرایش
                     </Button>
-                  </div>
-                )}
+                  </SheetTrigger>
+                  <SheetContent side="bottom">
+                    <SheetHeader>
+                      <SheetTitle>ابزار ویرایش نقشه</SheetTitle>
+                    </SheetHeader>
+                    <div className="p-4 space-y-4">
+                      <div className="flex items-center gap-2">
+                        <ToggleGroup
+                          type="single"
+                          value={selectedMode}
+                          onValueChange={(v) => setMode((v as any) || "none")}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <ToggleGroupItem value="move" aria-label="حالت جابه‌جایی">
+                            <Move className="w-4 h-4 ml-1" />
+                            جابه‌جایی
+                          </ToggleGroupItem>
+                          <ToggleGroupItem value="draw" aria-label="حالت رسم مستطیل">
+                            <Square className="w-4 h-4 ml-1" />
+                            رسم
+                          </ToggleGroupItem>
+                          <ToggleGroupItem value="text" aria-label="حالت افزودن متن">
+                            <TypeIcon className="w-4 h-4 ml-1" />
+                            متن
+                          </ToggleGroupItem>
+                          <ToggleGroupItem value="delete" aria-label="حالت حذف شکل" className="text-destructive">
+                            <Trash2 className="w-4 h-4 ml-1" />
+                            حذف
+                          </ToggleGroupItem>
+                        </ToggleGroup>
+                      </div>
 
-                <Button
-                  onClick={collectAndSaveChanges}
-                  disabled={pendingAdds.length === 0 && pendingDeletes.length === 0 && !dragMode && !drawMode && !textMode && !deleteMode}
-                  className="ml-2"
-                >
-                  <Save className="w-4 h-4 ml-2" />
-                  ثبت تغییرات
-                </Button>
-              </div>
+                      {drawMode && (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="secondary" className="flex items-center gap-1">
+                            <Palette className="w-3 h-3" />
+                            رنگ
+                          </Badge>
+                          {[
+                            { fill: "#f8fafc", stroke: "#475569" },
+                            { fill: "#eef2ff", stroke: "#475569" },
+                            { fill: "#fff7ed", stroke: "#d97706" },
+                            { fill: "#dcfce7", stroke: "#166534" },
+                            { fill: "rgba(100, 100, 255, 0.3)", stroke: "blue" },
+                            { fill: "#ffe4e6", stroke: "#be123c" },
+                          ].map((c) => (
+                            <button
+                              key={`${c.fill}-${c.stroke}`}
+                              className={cn(
+                                "w-5 h-5 rounded border",
+                                drawFillColor === c.fill && drawStrokeColor === c.stroke ? "ring-2 ring-ring" : ""
+                              )}
+                              style={{ backgroundColor: c.fill, borderColor: c.stroke }}
+                              onClick={() => { setDrawFillColor(c.fill); setDrawStrokeColor(c.stroke) }}
+                              aria-label={`انتخاب رنگ`}
+                              title={`fill: ${c.fill}`}
+                            />
+                          ))}
+                        </div>
+                      )}
+
+                      {textMode && (
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            value={textInput}
+                            onChange={(e) => setTextInput(e.target.value)}
+                            placeholder="متن"
+                            className="h-9 px-3 py-2 rounded border bg-background col-span-2"
+                            aria-label="ورود متن"
+                          />
+                          <input
+                            type="number"
+                            value={textX}
+                            onChange={(e) => setTextX(e.target.value)}
+                            placeholder="X"
+                            className="h-9 px-3 py-2 rounded border bg-background"
+                            aria-label="مختصات X"
+                          />
+                          <input
+                            type="number"
+                            value={textY}
+                            onChange={(e) => setTextY(e.target.value)}
+                            placeholder="Y"
+                            className="h-9 px-3 py-2 rounded border bg-background"
+                            aria-label="مختصات Y"
+                          />
+                          <Button variant="outline" size="sm" onClick={addTextAtCoordinates} className="col-span-2">
+                            قراردهی در مختصات
+                          </Button>
+                        </div>
+                      )}
+
+                      <Button
+                        onClick={collectAndSaveChanges}
+                        disabled={pendingAdds.length === 0 && pendingDeletes.length === 0 && !dragMode && !drawMode && !textMode && !deleteMode}
+                        className="w-full"
+                      >
+                        <Save className="w-4 h-4 ml-2" />
+                        ثبت تغییرات
+                      </Button>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <ToggleGroup
+                    type="single"
+                    value={selectedMode}
+                    onValueChange={(v) => setMode((v as any) || "none")}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <ToggleGroupItem value="move" aria-label="حالت جابه‌جایی">
+                      <Move className="w-4 h-4 ml-1" />
+                      جابه‌جایی
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="draw" aria-label="حالت رسم مستطیل">
+                      <Square className="w-4 h-4 ml-1" />
+                      رسم
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="text" aria-label="حالت افزودن متن">
+                      <TypeIcon className="w-4 h-4 ml-1" />
+                      متن
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="delete" aria-label="حالت حذف شکل" className="text-destructive">
+                      <Trash2 className="w-4 h-4 ml-1" />
+                      حذف
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+
+                  {drawMode && (
+                    <div className="flex items-center gap-2 ml-2">
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        <Palette className="w-3 h-3" />
+                        رنگ
+                      </Badge>
+                      {[
+                        { fill: "#f8fafc", stroke: "#475569" },
+                        { fill: "#eef2ff", stroke: "#475569" },
+                        { fill: "#fff7ed", stroke: "#d97706" },
+                        { fill: "#dcfce7", stroke: "#166534" },
+                        { fill: "rgba(100, 100, 255, 0.3)", stroke: "blue" },
+                        { fill: "#ffe4e6", stroke: "#be123c" },
+                      ].map((c) => (
+                        <button
+                          key={`${c.fill}-${c.stroke}`}
+                          className={cn(
+                            "w-5 h-5 rounded border",
+                            drawFillColor === c.fill && drawStrokeColor === c.stroke ? "ring-2 ring-ring" : ""
+                          )}
+                          style={{ backgroundColor: c.fill, borderColor: c.stroke }}
+                          onClick={() => { setDrawFillColor(c.fill); setDrawStrokeColor(c.stroke) }}
+                          aria-label={`انتخاب رنگ`}
+                          title={`fill: ${c.fill}`}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {textMode && (
+                    <div className="flex items-center gap-2 ml-2">
+                      <input
+                        value={textInput}
+                        onChange={(e) => setTextInput(e.target.value)}
+                        placeholder="متن"
+                        className="h-8 px-2 py-1 rounded border bg-background"
+                        aria-label="ورود متن"
+                        style={{ minWidth: 160 }}
+                      />
+                      <input
+                        type="number"
+                        value={textX}
+                        onChange={(e) => setTextX(e.target.value)}
+                        placeholder="X"
+                        className="h-8 px-2 py-1 rounded border bg-background w-24"
+                        aria-label="مختصات X"
+                      />
+                      <input
+                        type="number"
+                        value={textY}
+                        onChange={(e) => setTextY(e.target.value)}
+                        placeholder="Y"
+                        className="h-8 px-2 py-1 rounded border bg-background w-24"
+                        aria-label="مختصات Y"
+                      />
+                      <Button variant="outline" size="sm" onClick={addTextAtCoordinates}>
+                        قراردهی در مختصات
+                      </Button>
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={collectAndSaveChanges}
+                    disabled={pendingAdds.length === 0 && pendingDeletes.length === 0 && !dragMode && !drawMode && !textMode && !deleteMode}
+                    className="ml-2"
+                  >
+                    <Save className="w-4 h-4 ml-2" />
+                    ثبت تغییرات
+                  </Button>
+                </div>
+              )
             )}
 
             <div className="flex items-center gap-2 text-xs">
