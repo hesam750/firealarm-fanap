@@ -506,7 +506,7 @@ export function FloorPlanViewer({ extinguishers, onExtinguisherClick, onMapClick
     
     // Collect shape updates
     const shapeElements = Array.from(svg.querySelectorAll('[data-shape-key]:not([data-deleted="true"])')) as SVGGraphicsElement[]
-    const updates: { key: string; x: number; y: number }[] = []
+    const updates: { key: string; type: "rect" | "text"; x: number; y: number }[] = []
     
     for (const el of shapeElements) {
       const key = el.getAttribute("data-shape-key")
@@ -523,7 +523,7 @@ export function FloorPlanViewer({ extinguishers, onExtinguisherClick, onMapClick
       const newY = Math.round(baseY + ty)
       
       // Always push updates for shapes, even if no movement
-      updates.push({ key, x: newX, y: newY })
+      updates.push({ key, type: "rect", x: newX, y: newY })
     }
     
     // Collect text updates
@@ -543,7 +543,7 @@ export function FloorPlanViewer({ extinguishers, onExtinguisherClick, onMapClick
       const newY = Math.round(baseY + ty)
       
       // Always push updates for text elements, even if no movement
-      updates.push({ key, x: newX, y: newY })
+      updates.push({ key, type: "text", x: newX, y: newY })
     }
     
     // Always proceed with saving if in drag mode or draw/delete mode or there are adds/deletes
@@ -614,6 +614,88 @@ export function FloorPlanViewer({ extinguishers, onExtinguisherClick, onMapClick
         })
       })
   }
+
+  // Load saved overlays (positions/additions/deletions) from DB and apply to SVG
+  useEffect(() => {
+    const applyOverlays = async () => {
+      try {
+        const res = await fetch(`/api/floor-shapes?floor=${selectedFloor}`)
+        const data = await res.json()
+        if (!data?.ok) return
+        const shapes = (data.shapes || []) as Array<{
+          key: string
+          type: "rect" | "text"
+          x: number
+          y: number
+          width?: number
+          height?: number
+          fill?: string
+          stroke?: string
+          text?: string
+          anchor?: "start" | "middle" | "end"
+          className?: string
+          deleted?: boolean
+        }>
+        const container = selectedFloor === "ground" ? groundContainerRef.current : firstContainerRef.current
+        if (!container) return
+        const svg = container.querySelector(`svg[data-floor="${selectedFloor}"]`) as SVGSVGElement | null
+        if (!svg) return
+
+        for (const item of shapes) {
+          const selector = item.type === "rect" ? `[data-shape-key="${item.key}"]` : `[data-text-key="${item.key}"]`
+          const existing = svg.querySelector(selector) as SVGGraphicsElement | null
+          if (item.deleted) {
+            if (existing) {
+              existing.setAttribute('data-deleted', 'true')
+              const prevStyle = existing.getAttribute('style') || ''
+              if (!/display\s*:\s*none/.test(prevStyle)) {
+                existing.setAttribute('style', `${prevStyle}${prevStyle ? '; ' : ''}display: none`)
+              }
+            }
+            continue
+          }
+
+          if (existing) {
+            existing.setAttribute('x', String(item.x))
+            existing.setAttribute('y', String(item.y))
+            existing.setAttribute('transform', '')
+            if (item.type === 'text') {
+              if (item.text) (existing as any).textContent = item.text
+              if (item.anchor) existing.setAttribute('text-anchor', item.anchor)
+              if (item.className) existing.setAttribute('class', item.className)
+            }
+          } else {
+            if (item.type === 'rect') {
+              const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+              rect.setAttribute('data-shape-key', item.key)
+              rect.setAttribute('x', String(item.x))
+              rect.setAttribute('y', String(item.y))
+              rect.setAttribute('width', String(item.width ?? 24))
+              rect.setAttribute('height', String(item.height ?? 16))
+              rect.setAttribute('fill', item.fill ?? '#f8fafc')
+              rect.setAttribute('stroke', item.stroke ?? '#475569')
+              rect.setAttribute('stroke-width', '1.5')
+              svg.appendChild(rect)
+            } else {
+              const textEl = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+              textEl.setAttribute('data-text-key', item.key)
+              textEl.setAttribute('x', String(item.x))
+              textEl.setAttribute('y', String(item.y))
+              textEl.setAttribute('text-anchor', item.anchor ?? 'start')
+              textEl.setAttribute('class', item.className ?? 'fill-slate-800 text-xs')
+              textEl.setAttribute('style', 'font-family: system-ui')
+              textEl.textContent = item.text ?? ''
+              svg.appendChild(textEl)
+            }
+          }
+        }
+      } catch (e) {
+        console.error('failed to load floor overlays', e)
+      }
+    }
+
+    applyOverlays()
+  }, [selectedFloor])
 
   return (
     <Card className={cn("p-4 sm:p-6", cardClassName)}>

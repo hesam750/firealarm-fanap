@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
-import fs from "fs"
-import path from "path"
+import { prisma } from "@/lib/prisma"
 
 interface UpdateItem {
   key: string
+  type: "rect" | "text"
   x: number
   y: number
 }
@@ -29,8 +29,8 @@ type AddItem =
       className?: string
     }
 
-function escapeRegExp(str: string) {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+function sanitizeInt(n: number) {
+  return Math.round(Number.isFinite(n) ? n : 0)
 }
 
 export async function POST(req: Request) {
@@ -38,76 +38,75 @@ export async function POST(req: Request) {
     const body = await req.json() as { floor: "ground" | "first"; updates: UpdateItem[]; adds?: AddItem[]; deletes?: string[] }
     const { floor, updates, adds = [], deletes = [] } = body
 
-    const root = process.cwd()
-    const targetFile = floor === "ground"
-      ? path.join(root, "components", "floor-plan-ground.tsx")
-      : path.join(root, "components", "floor-plan-first.tsx")
-
-    let content = fs.readFileSync(targetFile, "utf8")
-
+    // Process updates: upsert by key
     for (const upd of updates) {
-      // Try rect first
-      const rectRegex = new RegExp(
-        `(<rect[^>]*data-shape-key="${upd.key}"[^>]*>)`,
-        "m"
-      )
-      const rectMatch = content.match(rectRegex)
-      if (rectMatch) {
-        const rectTag = rectMatch[1]
-        const newRectTag = rectTag
-          .replace(/x="[-0-9.]+"/i, `x="${upd.x}"`)
-          .replace(/y="[-0-9.]+"/i, `y="${upd.y}"`)
-        content = content.replace(rectTag, newRectTag)
-        continue
-      }
+      await prisma.floorShape.upsert({
+        where: { key: upd.key },
+        update: { x: sanitizeInt(upd.x), y: sanitizeInt(upd.y), type: upd.type, floor },
+        create: { key: upd.key, floor, type: upd.type, x: sanitizeInt(upd.x), y: sanitizeInt(upd.y) },
+      })
+    }
 
-      // Then try text elements
-      const textRegex = new RegExp(
-        `(<text[^>]*data-text-key="${upd.key}"[^>]*>)`,
-        "m"
-      )
-      const textMatch = content.match(textRegex)
-      if (textMatch) {
-        const textTag = textMatch[1]
-        const newTextTag = textTag
-          .replace(/x="[-0-9.]+"/i, `x="${upd.x}"`)
-          .replace(/y="[-0-9.]+"/i, `y="${upd.y}"`)
-        content = content.replace(textTag, newTextTag)
+    // Process adds: upsert with attributes
+    for (const a of adds) {
+      if (a.type === "rect") {
+        await prisma.floorShape.upsert({
+          where: { key: a.key },
+          update: {
+            type: "rect",
+            floor,
+            x: sanitizeInt(a.x),
+            y: sanitizeInt(a.y),
+            width: sanitizeInt(a.width),
+            height: sanitizeInt(a.height),
+            fill: a.fill ?? "#f8fafc",
+            stroke: a.stroke ?? "#475569",
+            deleted: false,
+          },
+          create: {
+            key: a.key,
+            type: "rect",
+            floor,
+            x: sanitizeInt(a.x),
+            y: sanitizeInt(a.y),
+            width: sanitizeInt(a.width),
+            height: sanitizeInt(a.height),
+            fill: a.fill ?? "#f8fafc",
+            stroke: a.stroke ?? "#475569",
+          },
+        })
+      } else {
+        await prisma.floorShape.upsert({
+          where: { key: a.key },
+          update: {
+            type: "text",
+            floor,
+            x: sanitizeInt(a.x),
+            y: sanitizeInt(a.y),
+            text: a.text,
+            anchor: a.anchor ?? "start",
+            className: a.className ?? "fill-slate-800 text-xs",
+            deleted: false,
+          },
+          create: {
+            key: a.key,
+            type: "text",
+            floor,
+            x: sanitizeInt(a.x),
+            y: sanitizeInt(a.y),
+            text: a.text,
+            anchor: a.anchor ?? "start",
+            className: a.className ?? "fill-slate-800 text-xs",
+          },
+        })
       }
     }
 
-    if (adds.length > 0) {
-      const insertIndex = content.lastIndexOf("</svg>")
-      const items = adds.map((a) => {
-        if (a.type === "rect") {
-          const fill = a.fill || "#f8fafc"
-          const stroke = a.stroke || "#475569"
-          return `      <rect data-shape-key="${a.key}" x="${a.x}" y="${a.y}" width="${a.width}" height="${a.height}" fill="${fill}" stroke="${stroke}" strokeWidth="1.5" />\n`
-        } else {
-          const anchor = a.anchor || "start"
-          const className = a.className || "fill-slate-800 text-xs"
-          const textContent = a.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")
-          return `      <text data-text-key="${a.key}" x="${a.x}" y="${a.y}" textAnchor="${anchor}" className="${className}" style={{ fontFamily: 'system-ui' }}>${textContent}</text>\n`
-        }
-      }).join("")
-      if (insertIndex !== -1) {
-        content = content.slice(0, insertIndex) + items + content.slice(insertIndex)
-      }
-    }
-
+    // Process deletes: mark deleted
     if (deletes.length > 0) {
-      for (const key of deletes) {
-        const esc = escapeRegExp(key)
-        // Remove rects by shape key (self-closing)
-        const rectRegex = new RegExp(`<rect[^>]*data-shape-key=\"${esc}\"[^>]*/>\\s*\\n?`, "m")
-        content = content.replace(rectRegex, "")
-        // Remove text blocks by text key
-        const textRegex = new RegExp(`<text[^>]*data-text-key=\"${esc}\"[^>]*>[\\s\\S]*?<\\/text>\\s*\\n?`, "m")
-        content = content.replace(textRegex, "")
-      }
+      await prisma.floorShape.updateMany({ where: { key: { in: deletes }, floor }, data: { deleted: true } })
     }
 
-    fs.writeFileSync(targetFile, content, "utf8")
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error("save-floor error", err)

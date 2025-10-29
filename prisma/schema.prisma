@@ -40,6 +40,25 @@ model Extinguisher {
   updatedAt      DateTime  @updatedAt
 }
 
+model FloorShape {
+  id        String    @id @default(cuid())
+  floor     Floor
+  key       String    @unique
+  type      ShapeType
+  x         Int
+  y         Int
+  width     Int?
+  height    Int?
+  fill      String?
+  stroke    String?
+  text      String?
+  anchor    String?
+  className String?
+  deleted   Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
 enum Role {
   USER
   ADMIN
@@ -48,4 +67,9 @@ enum Role {
 enum Floor {
   ground
   first
+}
+
+enum ShapeType {
+  rect
+  text
 }
