@@ -12,11 +12,13 @@ import { generateAlerts } from "@/lib/alerts"
 import { Settings } from "lucide-react"
 import Link from "next/link"
 import { BrandBg } from "@/components/brand-bg"
+import { AudioAlert } from "@/components/audio-alert"
 
 export default function Home() {
   const [extinguishers, setExtinguishers] = useState<Extinguisher[]>([])
   const [selectedExtinguisher, setSelectedExtinguisher] = useState<Extinguisher | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [acknowledgedAlertIds, setAcknowledgedAlertIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     const fetchExtinguishers = async () => {
@@ -33,6 +35,28 @@ export default function Home() {
 
   const alerts = generateAlerts(extinguishers)
 
+  // Load acknowledged alerts from localStorage
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    try {
+      const raw = localStorage.getItem("acknowledgedAlertIds")
+      if (raw) {
+        const arr = JSON.parse(raw)
+        if (Array.isArray(arr)) {
+          setAcknowledgedAlertIds(new Set(arr))
+        }
+      }
+    } catch {}
+  }, [])
+
+  // Persist acknowledged alerts to localStorage
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    try {
+      localStorage.setItem("acknowledgedAlertIds", JSON.stringify([...acknowledgedAlertIds]))
+    } catch {}
+  }, [acknowledgedAlertIds])
+
   const handleExtinguisherClick = (extinguisher: Extinguisher) => {
     setSelectedExtinguisher(extinguisher)
     setIsDialogOpen(true)
@@ -40,6 +64,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Audio alert: beep periodically if any extinguisher is expired */}
+      <AudioAlert active={alerts.some((a) => a.type === "expired" && !acknowledgedAlertIds.has(a.id))} />
       <div className="container mx-auto py-8 px-4 space-y-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -67,7 +93,12 @@ export default function Home() {
           </div>
 
           <div className="space-y-6">
-            <AlertPanel alerts={alerts} />
+            <AlertPanel
+              alerts={alerts}
+              onDismiss={(id) => {
+                setAcknowledgedAlertIds((prev) => new Set([...prev, id]))
+              }}
+            />
             <UpcomingExpirations extinguishers={extinguishers} />
           </div>
         </div>
