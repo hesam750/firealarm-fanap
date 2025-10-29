@@ -10,9 +10,9 @@ type BrandBgProps = {
   logoSrc?: string
 }
 
-export function BrandBg({ children, className, logoSrc = "/fanap.png" }: BrandBgProps) {
+export function BrandBg({ children, className, logoSrc }: BrandBgProps) {
   // Try user-provided logo first if passed; otherwise prefer /image/fanap.png, then fallback chain.
-  const initialSrc = logoSrc || "/image/fanap.png"
+  const initialSrc = logoSrc ?? "/image/fanap.png"
   const [src, setSrc] = useState(initialSrc)
   return (
     <div

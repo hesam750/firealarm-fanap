@@ -17,8 +17,8 @@ export const metadata: Metadata = {
     manifest: '/manifest.webmanifest',
     applicationName: 'FireAlarm',
     icons: {
-      icon: '/fanap.png',
-      apple: '/fanap.png',
+      icon: '/image/fanap.png',
+      apple: '/image/fanap.png',
     },
     appleWebApp: {
       capable: true,

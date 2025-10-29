@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Extinguisher } from "@/types/extinguisher"
+import { PersianDatePicker } from "@/components/persian-date-picker"
 
 interface ExtinguisherFormProps {
   extinguisher?: Extinguisher
@@ -90,22 +91,20 @@ export function ExtinguisherForm({ extinguisher, onSubmit, onCancel }: Extinguis
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="chargeDate">تاریخ شارژ</Label>
-          <Input
+          <PersianDatePicker
             id="chargeDate"
-            type="date"
             value={formData.chargeDate}
-            onChange={(e) => setFormData({ ...formData, chargeDate: e.target.value })}
+            onChange={(v) => setFormData({ ...formData, chargeDate: v })}
             required
           />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="expirationDate">تاریخ انقضا</Label>
-          <Input
+          <PersianDatePicker
             id="expirationDate"
-            type="date"
             value={formData.expirationDate}
-            onChange={(e) => setFormData({ ...formData, expirationDate: e.target.value })}
+            onChange={(v) => setFormData({ ...formData, expirationDate: v })}
             required
           />
         </div>
@@ -113,11 +112,11 @@ export function ExtinguisherForm({ extinguisher, onSubmit, onCancel }: Extinguis
 
       <div className="space-y-2">
         <Label htmlFor="lastInspection">آخرین بازرسی (اختیاری)</Label>
-        <Input
+        <PersianDatePicker
           id="lastInspection"
-          type="date"
           value={formData.lastInspection}
-          onChange={(e) => setFormData({ ...formData, lastInspection: e.target.value })}
+          onChange={(v) => setFormData({ ...formData, lastInspection: v })}
+          placeholder="مثال: ۱۴۰۳/۰۷/۱۵"
         />
       </div>
 

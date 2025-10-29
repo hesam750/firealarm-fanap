@@ -52,7 +52,7 @@ function LoginPageContent() {
       <div className="w-full max-w-md flex flex-col items-center">
         <Card className="w-full">
           <CardHeader className="items-center text-center border-b">
-            <Image src="/fanap.png" alt="FANAP TECH" width={140} height={42} className="mb-1" priority />
+            <Image src="/image/fanap.png" alt="FANAP TECH" width={140} height={42} className="mb-1" priority />
             <CardTitle className="text-2xl">ورود به حساب کاربری</CardTitle>
             {/* <CardDescription className="mt-1">برای دسترسی به پنل مدیریت وارد شوید</CardDescription> */}
             <CardAction>
