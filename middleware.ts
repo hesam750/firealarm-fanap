@@ -5,6 +5,22 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
   const token = req.cookies.get('token')?.value
 
+  // Redirect unauthenticated or invalid-token users from home to login immediately
+  if (pathname === '/') {
+    if (!token) {
+      const url = new URL('/login', req.url)
+      url.searchParams.set('next', '/admin')
+      return NextResponse.redirect(url)
+    }
+    try {
+      await verifyToken(token)
+    } catch {
+      const url = new URL('/login', req.url)
+      url.searchParams.set('next', '/admin')
+      return NextResponse.redirect(url)
+    }
+  }
+
   if (pathname.startsWith('/admin')) {
     if (!token) {
       const url = new URL('/login', req.url)
@@ -43,5 +59,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/login']
+  matcher: ['/', '/admin/:path*', '/login']
 }
