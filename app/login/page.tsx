@@ -123,10 +123,7 @@ function LoginPageContent() {
             </form>
           </CardContent>
 
-          <CardFooter className="justify-between">
-            <Link href="/register" className="text-sm text-muted-foreground hover:text-foreground">حساب ندارید؟ ثبت‌نام</Link>
-            <Link href="#" className="text-sm text-muted-foreground hover:text-foreground">فراموشی رمز؟</Link>
-          </CardFooter>
+          {/* لینک‌های ثبت‌نام و فراموشی رمز حذف شدند */}
         </Card>
       </div>
     </div>
