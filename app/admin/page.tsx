@@ -11,10 +11,11 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { useToast } from "@/hooks/use-toast"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Bell } from "lucide-react"
 import { useFcm } from "@/hooks/use-fcm"
 import Link from "next/link"
 import { LogoutButton } from "@/components/logout-button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 export default function AdminPage() {
   const [extinguishers, setExtinguishers] = useState<Extinguisher[]>([])
@@ -28,6 +29,7 @@ export default function AdminPage() {
   const [sendToAll, setSendToAll] = useState(true)
   const [userIdsText, setUserIdsText] = useState("")
   const [sending, setSending] = useState(false)
+  const [isNotifOpen, setIsNotifOpen] = useState(false)
 
   useEffect(() => {
     const fetchExtinguishers = async () => {
@@ -136,45 +138,57 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* ارسال اعلان به موبایل‌ها/PWA */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold">ارسال اعلان</h2>
-            <div className="flex items-center gap-2">
-              <span className="text-sm">ارسال به همه</span>
-              <Switch checked={sendToAll} onCheckedChange={setSendToAll} />
-            </div>
+        {/* اعلان‌ها به‌صورت مودال */}
+        <Dialog open={isNotifOpen} onOpenChange={setIsNotifOpen}>
+          <div className="flex justify-end">
+            <DialogTrigger asChild>
+              <Button variant="secondary" className="w-full md:w-auto">
+                <Bell className="w-4 h-4 ml-2" />
+                اعلان‌ها
+              </Button>
+            </DialogTrigger>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm">عنوان</label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="مثلاً: هشدار نشت گاز" />
+          <DialogContent className="sm:max-w-xl">
+            <DialogHeader>
+              <DialogTitle>ارسال اعلان</DialogTitle>
+            </DialogHeader>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm">ارسال به همه</span>
+                <Switch checked={sendToAll} onCheckedChange={setSendToAll} />
+              </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm">آدرس مقصد (اختیاری)</label>
-              <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="مثلاً: /admin یا https://example.com" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm">عنوان</label>
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="مثلاً: هشدار نشت گاز" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm">آدرس مقصد (اختیاری)</label>
+                <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="مثلاً: /admin یا https://example.com" />
+              </div>
+              <div className="md:col-span-2 space-y-2">
+                <label className="text-sm">متن پیام</label>
+                <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={4} placeholder="توضیحات اعلان" />
+              </div>
+              <div className="md:col-span-2 space-y-2">
+                <label className="text-sm">شناسه کاربران (با , جدا کنید)</label>
+                <Input
+                  value={userIdsText}
+                  onChange={(e) => setUserIdsText(e.target.value)}
+                  placeholder="مثلاً: cku...123, cku...456"
+                  disabled={sendToAll}
+                />
+                <p className="text-xs text-muted-foreground">در صورت فعال بودن "ارسال به همه" این فیلد نادیده گرفته می‌شود.</p>
+              </div>
             </div>
-            <div className="md:col-span-2 space-y-2">
-              <label className="text-sm">متن پیام</label>
-              <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={4} placeholder="توضیحات اعلان" />
+            <div className="mt-4 flex justify-end">
+              <Button onClick={sendNotification} disabled={sending || !title || !body}>
+                {sending ? "در حال ارسال..." : "ارسال اعلان"}
+              </Button>
             </div>
-            <div className="md:col-span-2 space-y-2">
-              <label className="text-sm">شناسه کاربران (با , جدا کنید)</label>
-              <Input
-                value={userIdsText}
-                onChange={(e) => setUserIdsText(e.target.value)}
-                placeholder="مثلاً: cku...123, cku...456"
-                disabled={sendToAll}
-              />
-              <p className="text-xs text-muted-foreground">در صورت فعال بودن "ارسال به همه" این فیلد نادیده گرفته می‌شود.</p>
-            </div>
-          </div>
-          <div className="mt-4 flex justify-end">
-            <Button onClick={sendNotification} disabled={sending || !title || !body}>
-              {sending ? "در حال ارسال..." : "ارسال اعلان"}
-            </Button>
-          </div>
-        </Card>
+          </DialogContent>
+        </Dialog>
 
         <DashboardStats extinguishers={extinguishers} />
 
