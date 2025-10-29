@@ -11,7 +11,9 @@ type BrandBgProps = {
 }
 
 export function BrandBg({ children, className, logoSrc = "/fanap.png" }: BrandBgProps) {
-  const [src, setSrc] = useState(logoSrc)
+  // Try user-provided logo first if passed; otherwise prefer /image/fanap.png, then fallback chain.
+  const initialSrc = logoSrc || "/image/fanap.png"
+  const [src, setSrc] = useState(initialSrc)
   return (
     <div
       className={cn(
@@ -67,8 +69,14 @@ export function BrandBg({ children, className, logoSrc = "/fanap.png" }: BrandBg
           className="h-auto w-auto"
           priority
           onError={() => {
-            // Fallback to placeholder if the provided logo fails to load
-            if (src !== "/placeholder-logo.png") setSrc("/placeholder-logo.png")
+            // Fallback chain: /image/fanap.png -> /fanap.png -> /placeholder-logo.png
+            if (src === "/image/fanap.png") {
+              setSrc("/fanap.png")
+              return
+            }
+            if (src !== "/placeholder-logo.png") {
+              setSrc("/placeholder-logo.png")
+            }
           }}
         />
       </div>
