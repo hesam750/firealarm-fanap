@@ -206,7 +206,7 @@ const config = {
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": "../../../.env",
+    "rootEnvPath": null,
     "schemaEnvPath": "../../../.env"
   },
   "relativePath": "../..",
@@ -216,7 +216,6 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
-  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
@@ -225,8 +224,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"./generated/client\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel User {\n  id           String              @id @default(cuid())\n  email        String              @unique\n  passwordHash String\n  name         String?\n  role         Role                @default(USER)\n  createdAt    DateTime            @default(now())\n  updatedAt    DateTime            @updatedAt\n  tokens       NotificationToken[]\n}\n\nmodel NotificationToken {\n  id        String   @id @default(cuid())\n  token     String   @unique\n  userId    String?\n  createdAt DateTime @default(now())\n  user      User?    @relation(fields: [userId], references: [id])\n}\n\nmodel Extinguisher {\n  id             String    @id @default(cuid())\n  location       String\n  floor          Floor\n  x              Int\n  y              Int\n  chargeDate     DateTime\n  expirationDate DateTime\n  lastInspection DateTime?\n  notes          String?\n  createdAt      DateTime  @default(now())\n  updatedAt      DateTime  @updatedAt\n}\n\nmodel FloorShape {\n  id        String    @id @default(cuid())\n  floor     Floor\n  key       String    @unique\n  type      ShapeType\n  x         Int\n  y         Int\n  width     Int?\n  height    Int?\n  fill      String?\n  stroke    String?\n  text      String?\n  anchor    String?\n  className String?\n  deleted   Boolean   @default(false)\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n}\n\nenum Role {\n  USER\n  ADMIN\n}\n\nenum Floor {\n  ground\n  first\n}\n\nenum ShapeType {\n  rect\n  text\n}\n",
-  "inlineSchemaHash": "11c8ed5818d70a375cad1af5ae17d2557e59a7f13e63624a9565f92ad7f0ff20",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"./generated/client\"\n}\n\ndatasource db {\n  provider  = \"postgresql\"\n  url       = env(\"DATABASE_URL\")\n  directUrl = env(\"DIRECT_URL\")\n}\n\nmodel User {\n  id           String              @id @default(cuid())\n  email        String              @unique\n  passwordHash String\n  name         String?\n  role         Role                @default(USER)\n  createdAt    DateTime            @default(now())\n  updatedAt    DateTime            @updatedAt\n  tokens       NotificationToken[]\n}\n\nmodel NotificationToken {\n  id        String   @id @default(cuid())\n  token     String   @unique\n  userId    String?\n  createdAt DateTime @default(now())\n  user      User?    @relation(fields: [userId], references: [id])\n}\n\nmodel Extinguisher {\n  id             String    @id @default(cuid())\n  location       String\n  floor          Floor\n  x              Int\n  y              Int\n  chargeDate     DateTime\n  expirationDate DateTime\n  lastInspection DateTime?\n  notes          String?\n  createdAt      DateTime  @default(now())\n  updatedAt      DateTime  @updatedAt\n}\n\nmodel FloorShape {\n  id        String    @id @default(cuid())\n  floor     Floor\n  key       String    @unique\n  type      ShapeType\n  x         Int\n  y         Int\n  width     Int?\n  height    Int?\n  fill      String?\n  stroke    String?\n  text      String?\n  anchor    String?\n  className String?\n  deleted   Boolean   @default(false)\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n}\n\nenum Role {\n  USER\n  ADMIN\n}\n\nenum Floor {\n  ground\n  first\n}\n\nenum ShapeType {\n  rect\n  text\n}\n",
+  "inlineSchemaHash": "7036a8500d916899fd9ac8198b375780d44eba44b3ff4823329aff757f039374",
   "copyEngine": true
 }
 config.dirname = '/'
