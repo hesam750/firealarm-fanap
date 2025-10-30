@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { Geist } from "next/font/google"
+import localFont from "next/font/local"
 import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -8,7 +8,16 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { cn } from "@/lib/utils"
 import { PwaInit } from "@/components/pwa-init"
 
-const geist = Geist({ subsets: ["latin"] })
+const byekan = localFont({
+  src: [
+    {
+      path: "../fonts/BYekan.ttf",
+      weight: "400",
+      style: "normal",
+    },
+  ],
+  display: "swap",
+})
 
 export const metadata: Metadata = {
   title: "سیستم مدیریت کپسول‌های آتش‌نشانی",
@@ -41,7 +50,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fa" dir="rtl" suppressHydrationWarning>
-      <body className={cn(geist.className, "min-h-screen bg-background text-foreground")}>        
+      <body className={cn(byekan.className, "min-h-screen bg-background text-foreground")}>        
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <div className="container mx-auto px-4 py-3 flex items-center justify-end">
             <ThemeToggle />
