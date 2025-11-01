@@ -87,6 +87,8 @@ export const FloorPlanGround = memo(function FloorPlanGround() {
       <line x1="50" y1="30" x2="850" y2="30" stroke="#94a3b8" strokeWidth="0.5" strokeDasharray="2,2" />
       <line x1="30" y1="50" x2="30" y2="1050" stroke="#94a3b8" strokeWidth="0.5" strokeDasharray="2,2" />
       {/* پاک‌سازی اشکال نمونه‌ی قبلی برای جلوگیری از شلوغی روی تصویر واقعی */}
+      {/* لایه‌ی رویی برای اشکال و متن‌های پویا تا همیشه بالا باشند */}
+      <g id="overlay" data-overlay-layer="true"></g>
           </svg>
   )
 })

@@ -6,6 +6,14 @@ interface UpdateItem {
   type: "rect" | "text"
   x: number
   y: number
+  // Optional attribute edits
+  width?: number
+  height?: number
+  fill?: string
+  stroke?: string
+  text?: string
+  anchor?: "start" | "middle" | "end"
+  className?: string
 }
 
 type AddItem =
@@ -38,12 +46,34 @@ export async function POST(req: Request) {
     const body = await req.json() as { floor: "ground" | "first"; updates: UpdateItem[]; adds?: AddItem[]; deletes?: string[] }
     const { floor, updates, adds = [], deletes = [] } = body
 
-    // Process updates: upsert by key
+    // Process updates: upsert by key (support optional attribute edits)
     for (const upd of updates) {
+      const updateData: any = { x: sanitizeInt(upd.x), y: sanitizeInt(upd.y), type: upd.type, floor }
+      if (typeof upd.width === "number") updateData.width = sanitizeInt(upd.width)
+      if (typeof upd.height === "number") updateData.height = sanitizeInt(upd.height)
+      if (typeof upd.fill === "string") updateData.fill = upd.fill
+      if (typeof upd.stroke === "string") updateData.stroke = upd.stroke
+      if (typeof upd.text === "string") updateData.text = upd.text
+      if (typeof upd.anchor === "string") updateData.anchor = upd.anchor
+      if (typeof upd.className === "string") updateData.className = upd.className
+
       await prisma.floorShape.upsert({
         where: { key: upd.key },
-        update: { x: sanitizeInt(upd.x), y: sanitizeInt(upd.y), type: upd.type, floor },
-        create: { key: upd.key, floor, type: upd.type, x: sanitizeInt(upd.x), y: sanitizeInt(upd.y) },
+        update: updateData,
+        create: {
+          key: upd.key,
+          floor,
+          type: upd.type,
+          x: sanitizeInt(upd.x),
+          y: sanitizeInt(upd.y),
+          width: typeof upd.width === "number" ? sanitizeInt(upd.width) : undefined,
+          height: typeof upd.height === "number" ? sanitizeInt(upd.height) : undefined,
+          fill: typeof upd.fill === "string" ? upd.fill : undefined,
+          stroke: typeof upd.stroke === "string" ? upd.stroke : undefined,
+          text: typeof upd.text === "string" ? upd.text : undefined,
+          anchor: typeof upd.anchor === "string" ? upd.anchor : undefined,
+          className: typeof upd.className === "string" ? upd.className : undefined,
+        },
       })
     }
 

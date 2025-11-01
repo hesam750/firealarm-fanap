@@ -96,6 +96,8 @@ export const FloorPlanFirst = memo(function FloorPlanFirst() {
       <text data-text-key="first-code-st-fb-13-re-fb-12" x="310" y="340" className="fill-slate-600 text-xs" style={{ fontFamily: "monospace" }}>ST-FB-13 · RE-FB-12</text>
       <text data-text-key="first-code-pa-fb-06-14" x="730" y="380" textAnchor="end" className="fill-slate-600 text-xs" style={{ fontFamily: "monospace" }}>PA-FB-06 · PA-FB-14</text>
       <text data-text-key="first-code-pa-fb-12" x="730" y="600" textAnchor="end" className="fill-slate-600 text-xs" style={{ fontFamily: "monospace" }}>PA-FB-12</text>
+      {/* لایه‌ی رویی برای اشکال و متن‌های پویا تا همیشه بالا باشند */}
+      <g id="overlay" data-overlay-layer="true"></g>
     </svg>
   )
 })

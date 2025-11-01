@@ -12,6 +12,7 @@ export default function AdminFloorPage() {
   const [extinguishers, setExtinguishers] = useState<Extinguisher[]>([])
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [addDefaults, setAddDefaults] = useState<Partial<Extinguisher> | null>(null)
+  const [editingExt, setEditingExt] = useState<Extinguisher | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -42,6 +43,22 @@ export default function AdminFloorPage() {
     }
   }
 
+  const handleUpdate = async (id: string, data: Omit<Extinguisher, "id" | "status">) => {
+    try {
+      await fetch(`/api/extinguishers/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+      const res = await fetch("/api/extinguishers")
+      const { extinguishers } = await res.json()
+      setExtinguishers(extinguishers)
+      setEditingExt(null)
+    } catch (e) {
+      console.error("failed to update extinguisher", e)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto py-8 px-4 space-y-6">
@@ -56,7 +73,7 @@ export default function AdminFloorPage() {
         </div>
         <FloorPlanViewer
           extinguishers={extinguishers}
-          onExtinguisherClick={() => {}}
+          onExtinguisherClick={(ext) => setEditingExt(ext)}
           editable
           onMapClickAddExtinguisher={(floor, x, y) => {
             setAddDefaults({ floor, x, y } as any)
@@ -69,6 +86,22 @@ export default function AdminFloorPage() {
               <DialogTitle>افزودن کپسول جدید</DialogTitle>
             </DialogHeader>
             <ExtinguisherForm extinguisher={addDefaults as any} onSubmit={handleAdd} onCancel={() => setIsAddDialogOpen(false)} />
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit extinguisher dialog */}
+        <Dialog open={!!editingExt} onOpenChange={() => setEditingExt(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>ویرایش کپسول</DialogTitle>
+            </DialogHeader>
+            {editingExt && (
+              <ExtinguisherForm
+                extinguisher={editingExt}
+                onSubmit={(data) => handleUpdate(editingExt.id, data)}
+                onCancel={() => setEditingExt(null)}
+              />
+            )}
           </DialogContent>
         </Dialog>
       </div>

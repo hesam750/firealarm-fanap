@@ -69,6 +69,14 @@ export function FloorPlanViewer({ extinguishers, onExtinguisherClick, onMapClick
   const [clickX, setClickX] = useState<number | null>(null)
   const [clickY, setClickY] = useState<number | null>(null)
 
+  // Edit dialog state for existing shapes/text
+  const [editPromptOpen, setEditPromptOpen] = useState<boolean>(false)
+  const editElementRef = useRef<SVGGraphicsElement | null>(null)
+  const [editTarget, setEditTarget] = useState<null | { type: "rect" | "text"; key: string }>(null)
+  const [editRect, setEditRect] = useState<{ width: string; height: string; fill: string; stroke: string }>({ width: "", height: "", fill: "", stroke: "" })
+  const [editText, setEditText] = useState<{ text: string; anchor: "start" | "middle" | "end"; className: string }>({ text: "", anchor: "start", className: "fill-slate-800 text-xs" })
+  const [pendingAttrEdits, setPendingAttrEdits] = useState<Record<string, { type: "rect" | "text"; width?: number; height?: number; fill?: string; stroke?: string; text?: string; anchor?: "start" | "middle" | "end"; className?: string }>>({})
+
   const groundFloorExtinguishers = extinguishers.filter((ext) => ext.floor === "ground")
   const firstFloorExtinguishers = extinguishers.filter((ext) => ext.floor === "first")
 
@@ -110,6 +118,29 @@ export function FloorPlanViewer({ extinguishers, onExtinguisherClick, onMapClick
         return "#ef4444" // red
       default:
         return "#9ca3af" // gray
+    }
+  }
+
+  // Ensure an overlay group exists and is last to keep dynamic elements on top
+  function ensureOverlayGroup(svg: SVGSVGElement): SVGGElement {
+    let overlay = svg.querySelector('g[data-overlay-layer="true"]') as SVGGElement | null
+    if (!overlay) {
+      overlay = document.createElementNS('http://www.w3.org/2000/svg', 'g') as SVGGElement
+      overlay.setAttribute('id', 'overlay')
+      overlay.setAttribute('data-overlay-layer', 'true')
+    }
+    // Always append to ensure it's the last child; appendChild moves existing nodes to the end
+    svg.appendChild(overlay)
+    return overlay
+  }
+
+  // Bring an element to front if it's inside the overlay group
+  function bringToFrontIfOverlay(el: SVGGraphicsElement) {
+    const svg = el.closest('svg') as SVGSVGElement | null
+    if (!svg) return
+    const overlay = svg.querySelector('g[data-overlay-layer="true"]') as SVGGElement | null
+    if (overlay && overlay.contains(el)) {
+      overlay.appendChild(el)
     }
   }
 
@@ -268,12 +299,45 @@ export function FloorPlanViewer({ extinguishers, onExtinguisherClick, onMapClick
         return
       }
       // Click-to-add extinguisher: when editable and no other mode is active
-      if (editable && !dragMode && !drawMode && !textMode && !deleteMode && onMapClickAddExtinguisher) {
-        const containerRect = container.getBoundingClientRect()
-        const xPercent = ((e.clientX - containerRect.left) / containerRect.width) * 100
-        const yPercent = ((e.clientY - containerRect.top) / containerRect.height) * 100
-        onMapClickAddExtinguisher(selectedFloor, Math.round(xPercent), Math.round(yPercent))
-        return
+      if (editable && !dragMode && !drawMode && !textMode && !deleteMode) {
+        // If clicked an existing shape/text, open edit dialog
+        const targetEl = (e.target as Element)?.closest('[data-shape-key], [data-text-key]') as SVGGraphicsElement | null
+        if (targetEl) {
+          const shapeKey = targetEl.getAttribute('data-shape-key')
+          const textKey = targetEl.getAttribute('data-text-key')
+          const type = shapeKey ? 'rect' : 'text'
+          const key = shapeKey || textKey || ''
+          if (key) {
+            editElementRef.current = targetEl
+            // در صورت قرار داشتن در گروه رویی، عنصر را جلو بیاوریم
+            bringToFrontIfOverlay(targetEl)
+            setEditTarget({ type, key })
+            if (type === 'rect') {
+              setEditRect({
+                width: String(targetEl.getAttribute('width') || ''),
+                height: String(targetEl.getAttribute('height') || ''),
+                fill: String(targetEl.getAttribute('fill') || drawFillColor),
+                stroke: String(targetEl.getAttribute('stroke') || drawStrokeColor),
+              })
+            } else {
+              setEditText({
+                text: (targetEl as any).textContent || '',
+                anchor: (targetEl.getAttribute('text-anchor') as any) || 'start',
+                className: String(targetEl.getAttribute('class') || 'fill-slate-800 text-xs'),
+              })
+            }
+            setEditPromptOpen(true)
+            return
+          }
+        }
+        // Otherwise, treat as map click to add extinguisher (if callback provided)
+        if (onMapClickAddExtinguisher) {
+          const containerRect = container.getBoundingClientRect()
+          const xPercent = ((e.clientX - containerRect.left) / containerRect.width) * 100
+          const yPercent = ((e.clientY - containerRect.top) / containerRect.height) * 100
+          onMapClickAddExtinguisher(selectedFloor, Math.round(xPercent), Math.round(yPercent))
+          return
+        }
       }
       // Handle drawing mode
       if (drawMode) {
@@ -300,7 +364,9 @@ export function FloorPlanViewer({ extinguishers, onExtinguisherClick, onMapClick
         const genKey = `rect-${selectedFloor}-${Date.now()}`
         newRect.setAttribute("data-shape-key", genKey)
         
-        svg.appendChild(newRect)
+        // Append to overlay to ensure top stacking order
+        const overlay = ensureOverlayGroup(svg)
+        overlay.appendChild(newRect)
         drawingRef.current = { startX: svgX, startY: svgY, rect: newRect }
         return
       }
@@ -312,6 +378,8 @@ export function FloorPlanViewer({ extinguishers, onExtinguisherClick, onMapClick
       
       // Check if it's a draggable element (rect or text)
       if (target.tagName !== "rect" && target.tagName !== "text") return
+      // If inside overlay group, bring to front while dragging
+      bringToFrontIfOverlay(target)
       
       // Store original position as data attributes for reference
       const xAttr = target.getAttribute("x")
@@ -446,7 +514,8 @@ export function FloorPlanViewer({ extinguishers, onExtinguisherClick, onMapClick
     newText.setAttribute("class", "fill-slate-800 text-xs")
     newText.setAttribute("style", "font-family: system-ui")
     newText.textContent = content
-    svg.appendChild(newText)
+    const overlay = ensureOverlayGroup(svg)
+    overlay.appendChild(newText)
 
     setPendingAdds(prev => [...prev, { type: "text", key: genKey, x, y, text: content }])
     setTimeout(() => collectAndSaveChanges(), 100)
@@ -478,7 +547,8 @@ export function FloorPlanViewer({ extinguishers, onExtinguisherClick, onMapClick
     newText.setAttribute("class", "fill-slate-800 text-xs")
     newText.setAttribute("style", "font-family: system-ui")
     newText.textContent = content
-    svg.appendChild(newText)
+    const overlay = ensureOverlayGroup(svg)
+    overlay.appendChild(newText)
 
     setPendingAdds(prev => [...prev, { type: "text", key: genKey, x: clickX!, y: clickY!, text: content }])
 
@@ -506,7 +576,7 @@ export function FloorPlanViewer({ extinguishers, onExtinguisherClick, onMapClick
     
     // Collect shape updates
     const shapeElements = Array.from(svg.querySelectorAll('[data-shape-key]:not([data-deleted="true"])')) as SVGGraphicsElement[]
-    const updates: { key: string; type: "rect" | "text"; x: number; y: number }[] = []
+    const updates: { key: string; type: "rect" | "text"; x: number; y: number; width?: number; height?: number; fill?: string; stroke?: string; text?: string; anchor?: "start" | "middle" | "end"; className?: string }[] = []
     
     for (const el of shapeElements) {
       const key = el.getAttribute("data-shape-key")
@@ -523,7 +593,17 @@ export function FloorPlanViewer({ extinguishers, onExtinguisherClick, onMapClick
       const newY = Math.round(baseY + ty)
       
       // Always push updates for shapes, even if no movement
-      updates.push({ key, type: "rect", x: newX, y: newY })
+      const attr = pendingAttrEdits[key]
+      updates.push({
+        key,
+        type: "rect",
+        x: newX,
+        y: newY,
+        width: attr?.width,
+        height: attr?.height,
+        fill: attr?.fill,
+        stroke: attr?.stroke,
+      })
     }
     
     // Collect text updates
@@ -543,7 +623,16 @@ export function FloorPlanViewer({ extinguishers, onExtinguisherClick, onMapClick
       const newY = Math.round(baseY + ty)
       
       // Always push updates for text elements, even if no movement
-      updates.push({ key, type: "text", x: newX, y: newY })
+      const attr = pendingAttrEdits[key]
+      updates.push({
+        key,
+        type: "text",
+        x: newX,
+        y: newY,
+        text: attr?.text,
+        anchor: attr?.anchor,
+        className: attr?.className,
+      })
     }
     
     // Always proceed with saving if in drag mode or draw/delete mode or there are adds/deletes
@@ -589,6 +678,10 @@ export function FloorPlanViewer({ extinguishers, onExtinguisherClick, onMapClick
           // Clear pending deletes after saving
           if (pendingDeletes.length > 0) {
             setPendingDeletes([])
+          }
+          // Clear pending attribute edits after saving
+          if (Object.keys(pendingAttrEdits).length > 0) {
+            setPendingAttrEdits({})
           }
           
           console.log("Save successful, elements updated")
@@ -675,7 +768,8 @@ export function FloorPlanViewer({ extinguishers, onExtinguisherClick, onMapClick
               rect.setAttribute('fill', item.fill ?? '#f8fafc')
               rect.setAttribute('stroke', item.stroke ?? '#475569')
               rect.setAttribute('stroke-width', '1.5')
-              svg.appendChild(rect)
+              const overlay = ensureOverlayGroup(svg)
+              overlay.appendChild(rect)
             } else {
               const textEl = document.createElementNS('http://www.w3.org/2000/svg', 'text')
               textEl.setAttribute('data-text-key', item.key)
@@ -685,7 +779,8 @@ export function FloorPlanViewer({ extinguishers, onExtinguisherClick, onMapClick
               textEl.setAttribute('class', item.className ?? 'fill-slate-800 text-xs')
               textEl.setAttribute('style', 'font-family: system-ui')
               textEl.textContent = item.text ?? ''
-              svg.appendChild(textEl)
+              const overlay = ensureOverlayGroup(svg)
+              overlay.appendChild(textEl)
             }
           }
         }
@@ -941,6 +1036,119 @@ export function FloorPlanViewer({ extinguishers, onExtinguisherClick, onMapClick
             <DialogFooter>
               <Button variant="outline" onClick={() => setTextPromptOpen(false)}>انصراف</Button>
               <Button onClick={confirmAddTextFromPrompt}>افزودن</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit dialog for existing rect/text */}
+        <Dialog open={editPromptOpen} onOpenChange={setEditPromptOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>ویرایش {editTarget?.type === 'rect' ? 'مستطیل' : 'متن'}</DialogTitle>
+              <DialogDescription>خصوصیات را ویرایش کنید و ذخیره نمایید</DialogDescription>
+            </DialogHeader>
+            {editTarget?.type === 'rect' && (
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  type="number"
+                  value={editRect.width}
+                  onChange={(e) => setEditRect((p) => ({ ...p, width: e.target.value }))}
+                  placeholder="عرض"
+                  className="h-9 px-3 py-2 rounded border bg-background"
+                />
+                <input
+                  type="number"
+                  value={editRect.height}
+                  onChange={(e) => setEditRect((p) => ({ ...p, height: e.target.value }))}
+                  placeholder="ارتفاع"
+                  className="h-9 px-3 py-2 rounded border bg-background"
+                />
+                <input
+                  value={editRect.fill}
+                  onChange={(e) => setEditRect((p) => ({ ...p, fill: e.target.value }))}
+                  placeholder="رنگ داخل (fill)"
+                  className="h-9 px-3 py-2 rounded border bg-background col-span-2"
+                />
+                <input
+                  value={editRect.stroke}
+                  onChange={(e) => setEditRect((p) => ({ ...p, stroke: e.target.value }))}
+                  placeholder="رنگ حاشیه (stroke)"
+                  className="h-9 px-3 py-2 rounded border bg-background col-span-2"
+                />
+              </div>
+            )}
+            {editTarget?.type === 'text' && (
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  value={editText.text}
+                  onChange={(e) => setEditText((p) => ({ ...p, text: e.target.value }))}
+                  placeholder="متن"
+                  className="h-9 px-3 py-2 rounded border bg-background col-span-2"
+                />
+                <select
+                  value={editText.anchor}
+                  onChange={(e) => setEditText((p) => ({ ...p, anchor: e.target.value as any }))}
+                  className="h-9 px-3 py-2 rounded border bg-background"
+                >
+                  <option value="start">شروع</option>
+                  <option value="middle">وسط</option>
+                  <option value="end">پایان</option>
+                </select>
+                <select
+                  value={editText.className}
+                  onChange={(e) => setEditText((p) => ({ ...p, className: e.target.value }))}
+                  className="h-9 px-3 py-2 rounded border bg-background col-span-1"
+                >
+                  <option value="fill-slate-800 text-xs">کوچک</option>
+                  <option value="fill-slate-800 text-sm">متوسط</option>
+                  <option value="fill-slate-800 text-base">عادی</option>
+                  <option value="fill-slate-800 text-lg">بزرگ</option>
+                </select>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditPromptOpen(false)}>انصراف</Button>
+              <Button
+                onClick={() => {
+                  const el = editElementRef.current
+                  if (!el || !editTarget) return
+                  const key = editTarget.key
+                  if (editTarget.type === 'rect') {
+                    const widthNum = Number(editRect.width)
+                    const heightNum = Number(editRect.height)
+                    if (Number.isFinite(widthNum)) el.setAttribute('width', String(widthNum))
+                    if (Number.isFinite(heightNum)) el.setAttribute('height', String(heightNum))
+                    if (editRect.fill) el.setAttribute('fill', editRect.fill)
+                    if (editRect.stroke) el.setAttribute('stroke', editRect.stroke)
+                    setPendingAttrEdits((prev) => ({
+                      ...prev,
+                      [key]: {
+                        type: 'rect',
+                        width: Number.isFinite(widthNum) ? Math.round(widthNum) : undefined,
+                        height: Number.isFinite(heightNum) ? Math.round(heightNum) : undefined,
+                        fill: editRect.fill || undefined,
+                        stroke: editRect.stroke || undefined,
+                      },
+                    }))
+                  } else {
+                    ;(el as any).textContent = editText.text
+                    el.setAttribute('text-anchor', editText.anchor)
+                    el.setAttribute('class', editText.className)
+                    setPendingAttrEdits((prev) => ({
+                      ...prev,
+                      [key]: {
+                        type: 'text',
+                        text: editText.text,
+                        anchor: editText.anchor,
+                        className: editText.className,
+                      },
+                    }))
+                  }
+                  setEditPromptOpen(false)
+                  // Auto-save attribute edits
+                  setTimeout(() => collectAndSaveChanges(), 100)
+                }}
+              >ذخیره</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
