@@ -11,12 +11,14 @@ import { PwaInit } from "@/components/pwa-init"
 const byekan = localFont({
   src: [
     {
-      path: "../fonts/BYekan.ttf",
+      path: "../BYekan.ttf",
       weight: "400",
       style: "normal",
     },
   ],
+  variable: "--font-byekan",
   display: "swap",
+  fallback: ["Tahoma", "Arial", "sans-serif"],
 })
 
 export const metadata: Metadata = {
@@ -49,7 +51,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="fa" dir="rtl" suppressHydrationWarning>
+    <html lang="fa" dir="rtl" suppressHydrationWarning className={byekan.variable}>
       <body className={cn(byekan.className, "min-h-screen bg-background text-foreground")}>        
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <div className="fixed left-4 top-4 z-50">

@@ -16,7 +16,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 function LoginPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const nextPath = searchParams.get('next') || '/admin'
+  const nextPath = searchParams.get('next') || '/'
   const { toast } = useToast()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -43,7 +43,7 @@ function LoginPageContent() {
     }
   }
 
-  const isEmailValid = /.+@.+\..+/.test(email)
+  const isIdentifierValid = email.trim().length >= 2
   const isPasswordValid = password.length >= 6
 
   return (
@@ -72,11 +72,11 @@ function LoginPageContent() {
                     id="email"
                     type="email"
                     inputMode="email"
-                    placeholder="example@domain.com"
+                    placeholder="HSE یا example@domain.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    aria-invalid={email.length > 0 && !isEmailValid}
+                    aria-invalid={email.length > 0 && !isIdentifierValid}
                   />
                 </InputGroup>
               </div>
@@ -110,7 +110,7 @@ function LoginPageContent() {
               </div>
 
               <Button
-                disabled={loading || !isEmailValid || !isPasswordValid}
+                disabled={loading || !isIdentifierValid || !isPasswordValid}
                 className="w-full"
                 type="submit"
               >

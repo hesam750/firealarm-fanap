@@ -119,10 +119,34 @@
   border-color: var(--border);
 }
 
+html {
+  font-family: var(--font-byekan), Tahoma, Arial, sans-serif;
+}
+
 body {
   background-color: var(--background);
   color: var(--foreground);
   direction: rtl;
+  font-family: var(--font-byekan), Tahoma, Arial, sans-serif;
+}
+
+button,
+input,
+textarea,
+select,
+label,
+span,
+div,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+li,
+a {
+  font-family: inherit;
 }
 
 /* Mobile-friendly base rules */
