@@ -240,7 +240,7 @@ export default function AdminPage() {
                   placeholder="مثلاً: cku...123, cku...456"
                   disabled={sendToAll}
                 />
-                <p className="text-xs text-muted-foreground">در صورت فعال بودن "ارسال به همه" این فیلد نادیده گرفته می‌شود.</p>
+                <p className="text-xs text-muted-foreground">در صورت فعال بودن «ارسال به همه» این فیلد نادیده گرفته می‌شود.</p>
               </div>
             </div>
             <div className="mt-4 flex justify-end">

@@ -86,9 +86,6 @@ Prisma.NullTypes = {
  * Enums
  */
 exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
-  ReadUncommitted: 'ReadUncommitted',
-  ReadCommitted: 'ReadCommitted',
-  RepeatableRead: 'RepeatableRead',
   Serializable: 'Serializable'
 });
 
@@ -147,11 +144,6 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
-exports.Prisma.QueryMode = {
-  default: 'default',
-  insensitive: 'insensitive'
-};
-
 exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
@@ -188,7 +180,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\HesaM\\Desktop\\New folder (2)\\prisma\\generated\\client",
+      "value": "C:\\Users\\HesaM\\Desktop\\fire-alarm\\prisma\\generated\\client",
       "fromEnvVar": null
     },
     "config": {
@@ -202,7 +194,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\HesaM\\Desktop\\New folder (2)\\prisma\\schema.prisma",
+    "sourceFilePath": "C:\\Users\\HesaM\\Desktop\\fire-alarm\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -215,17 +207,18 @@ const config = {
   "datasourceNames": [
     "db"
   ],
-  "activeProvider": "postgresql",
+  "activeProvider": "sqlite",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
-        "fromEnvVar": "DATABASE_URL",
-        "value": null
+        "fromEnvVar": null,
+        "value": "file:./dev.db"
       }
     }
   },
-  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"./generated/client\"\n}\n\ndatasource db {\n  provider  = \"postgresql\"\n  url       = env(\"DATABASE_URL\")\n  directUrl = env(\"DIRECT_URL\")\n}\n\nmodel User {\n  id           String              @id @default(cuid())\n  email        String              @unique\n  passwordHash String\n  name         String?\n  role         Role                @default(USER)\n  createdAt    DateTime            @default(now())\n  updatedAt    DateTime            @updatedAt\n  tokens       NotificationToken[]\n}\n\nmodel NotificationToken {\n  id        String   @id @default(cuid())\n  token     String   @unique\n  userId    String?\n  createdAt DateTime @default(now())\n  user      User?    @relation(fields: [userId], references: [id])\n}\n\nmodel Extinguisher {\n  id             String    @id @default(cuid())\n  location       String\n  floor          Floor\n  x              Int\n  y              Int\n  chargeDate     DateTime\n  expirationDate DateTime\n  lastInspection DateTime?\n  notes          String?\n  createdAt      DateTime  @default(now())\n  updatedAt      DateTime  @updatedAt\n}\n\nmodel FloorShape {\n  id        String    @id @default(cuid())\n  floor     Floor\n  key       String    @unique\n  type      ShapeType\n  x         Int\n  y         Int\n  width     Int?\n  height    Int?\n  fill      String?\n  stroke    String?\n  text      String?\n  anchor    String?\n  className String?\n  deleted   Boolean   @default(false)\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n}\n\nenum Role {\n  USER\n  ADMIN\n}\n\nenum Floor {\n  ground\n  first\n}\n\nenum ShapeType {\n  rect\n  text\n}\n",
-  "inlineSchemaHash": "7036a8500d916899fd9ac8198b375780d44eba44b3ff4823329aff757f039374",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"./generated/client\"\n}\n\ndatasource db {\n  provider = \"sqlite\"\n  url      = \"file:./dev.db\"\n}\n\nmodel User {\n  id           String              @id @default(cuid())\n  email        String              @unique\n  passwordHash String\n  name         String?\n  role         Role                @default(USER)\n  createdAt    DateTime            @default(now())\n  updatedAt    DateTime            @updatedAt\n  tokens       NotificationToken[]\n}\n\nmodel NotificationToken {\n  id        String   @id @default(cuid())\n  token     String   @unique\n  userId    String?\n  createdAt DateTime @default(now())\n  user      User?    @relation(fields: [userId], references: [id])\n}\n\nmodel Extinguisher {\n  id             String    @id @default(cuid())\n  location       String\n  floor          Floor\n  x              Int\n  y              Int\n  chargeDate     DateTime\n  expirationDate DateTime\n  lastInspection DateTime?\n  notes          String?\n  createdAt      DateTime  @default(now())\n  updatedAt      DateTime  @updatedAt\n}\n\nmodel FloorShape {\n  id        String    @id @default(cuid())\n  floor     Floor\n  key       String    @unique\n  type      ShapeType\n  x         Int\n  y         Int\n  width     Int?\n  height    Int?\n  fill      String?\n  stroke    String?\n  text      String?\n  anchor    String?\n  className String?\n  deleted   Boolean   @default(false)\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n}\n\nenum Role {\n  USER\n  ADMIN\n}\n\nenum Floor {\n  ground\n  first\n}\n\nenum ShapeType {\n  rect\n  text\n}\n",
+  "inlineSchemaHash": "15fc3220f63e5e6bb45c98dca00f44b5c9ce86f70264578f14cdb342649d9e2b",
   "copyEngine": true
 }
 config.dirname = '/'
@@ -243,9 +236,7 @@ config.engineWasm = {
 config.compilerWasm = undefined
 
 config.injectableEdgeEnv = () => ({
-  parsed: {
-    DATABASE_URL: typeof globalThis !== 'undefined' && globalThis['DATABASE_URL'] || typeof process !== 'undefined' && process.env && process.env.DATABASE_URL || undefined
-  }
+  parsed: {}
 })
 
 if (typeof globalThis !== 'undefined' && globalThis['DEBUG'] || typeof process !== 'undefined' && process.env && process.env.DEBUG || undefined) {

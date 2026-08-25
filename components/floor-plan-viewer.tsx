@@ -793,11 +793,26 @@ export function FloorPlanViewer({ extinguishers, onExtinguisherClick, onMapClick
   }, [selectedFloor])
 
   return (
-    <Card className={cn("p-4 sm:p-6", cardClassName)}>
+    <Card className={cn("border-slate-200 bg-white p-3 shadow-sm sm:p-5 dark:border-slate-800 dark:bg-slate-900", cardClassName)}>
       <div className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-2xl font-bold">نقشه ساختمان</h2>
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-4 border-b border-slate-200 pb-4 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-bold text-slate-950 dark:text-white sm:text-2xl">نقشه ساختمان</h2>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {selectedMode === "none" ? "برای افزودن سریع، روی نقطه موردنظر نقشه کلیک کنید" : "حالت فعال را روی نقشه اجرا کنید یا برای خروج، همان ابزار را دوباره انتخاب کنید"}
+              </p>
+            </div>
+            <Badge variant="outline" className="shrink-0 border-slate-300 text-slate-600 dark:border-slate-700 dark:text-slate-300">
+              {extinguishers.length} تجهیز
+            </Badge>
+          </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {editable && selectedMode === "none" && (
+                <Badge className="border border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-900 dark:bg-orange-950/40 dark:text-orange-300">
+                  افزودن با کلیک روی نقشه
+                </Badge>
+              )}
             {editable && (
               isMobile ? (
                 <Sheet>
@@ -1236,14 +1251,18 @@ export function FloorPlanViewer({ extinguishers, onExtinguisherClick, onMapClick
           </TabsContent>
         </Tabs>
 
-        <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+        <div className="grid grid-cols-3 gap-3 border-t pt-4 sm:gap-4">
           <div className="text-center">
             <div className="text-3xl font-bold text-emerald-600">{extinguishers.filter((e) => e.status === "active").length}</div>
             <div className="text-sm text-muted-foreground">کپسول فعال</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-red-600">{extinguishers.filter((e) => e.status === "expired" || e.status === "warning").length}</div>
-            <div className="text-sm text-muted-foreground">نیاز به توجه</div>
+            <div className="text-3xl font-bold text-amber-600">{extinguishers.filter((e) => e.status === "warning").length}</div>
+            <div className="text-sm text-muted-foreground">نیازمند بررسی</div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-red-600">{extinguishers.filter((e) => e.status === "expired").length}</div>
+            <div className="text-sm text-muted-foreground">منقضی‌شده</div>
           </div>
         </div>
       </div>

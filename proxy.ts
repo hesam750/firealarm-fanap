@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
   const token = req.cookies.get('token')?.value
 
-  // Redirect unauthenticated or invalid-token users from home to login immediately
   if (pathname === '/') {
     if (!token) {
       const url = new URL('/login', req.url)
@@ -47,11 +46,10 @@ export async function middleware(req: NextRequest) {
       const payload = await verifyToken<{ role?: string }>(token)
       if (payload.role === 'ADMIN') {
         const next = req.nextUrl.searchParams.get('next') || '/admin'
-        const url = new URL(next, req.url)
-        return NextResponse.redirect(url)
+        return NextResponse.redirect(new URL(next, req.url))
       }
     } catch {
-      // ignore token errors for login page
+      // Allow invalid-token users to reach the login page.
     }
   }
 
@@ -59,5 +57,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/admin/:path*', '/login']
+  matcher: ['/', '/admin/:path*', '/login'],
 }

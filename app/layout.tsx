@@ -52,7 +52,7 @@ export default function RootLayout({
     <html lang="fa" dir="rtl" suppressHydrationWarning>
       <body className={cn(byekan.className, "min-h-screen bg-background text-foreground")}>        
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          <div className="container mx-auto px-4 py-3 flex items-center justify-end">
+          <div className="fixed left-4 top-4 z-50">
             <ThemeToggle />
           </div>
           <PwaInit />

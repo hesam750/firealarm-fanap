@@ -11,7 +11,7 @@ export async function sendToTokens(tokens: string[], opts: SendOptions) {
   if (!tokens.length) return { successCount: 0, failureCount: 0 }
   const { title, body, url } = opts
 
-  let message: MulticastMessage = {
+  const message: MulticastMessage = {
     tokens,
     notification: { title, body },
   }
